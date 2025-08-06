@@ -47,7 +47,7 @@ function App() {
           justifyContent: 'center',
           minHeight: '100svh',
           width: '100svw',
-          p: 2,
+          p: { xs: 2, sm: 3 },
           bgcolor: '#f4f6f8',
         }}
       >
@@ -55,7 +55,13 @@ function App() {
           variant="h4"
           component="h1"
           gutterBottom
-          sx={{ mb: 4, fontWeight: 'bold', color: 'text.primary' }}
+          sx={{
+            mb: 4,
+            fontWeight: 'bold',
+            color: 'text.primary',
+            textAlign: 'center',
+            fontSize: { xs: '2rem', sm: '2.5rem' }
+          }}
         >
           中文独立博客状态检查器
         </Typography>

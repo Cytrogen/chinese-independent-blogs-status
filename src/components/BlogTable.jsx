@@ -1,8 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-	Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-	Paper, CircularProgress, Chip, Link, Tooltip, Box,
-	TablePagination, Pagination, Typography
+	Table,
+	TableBody,
+	TableCell,
+	TableContainer,
+	TableHead,
+	TableRow,
+	Paper,
+	CircularProgress,
+	Chip,
+	Link,
+	Tooltip,
+	Box,
+	TablePagination,
+	Pagination,
+	Typography,
+	Card,
+	CardContent,
+	useTheme,
+	useMediaQuery,
 } from '@mui/material';
 import RssFeedIcon from '@mui/icons-material/RssFeed';
 
@@ -29,6 +45,9 @@ const BlogTable = ({ allBlogs }) => {
 	const [rowsPerPage, setRowsPerPage] = useState(10);
 	const [blogData, setBlogData] = useState({});
 	const [isPageLoading, setIsPageLoading] = useState(false);
+
+	const theme = useTheme();
+	const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
 	const blogDataRef = useRef(blogData);
 	useEffect(() => {
@@ -100,8 +119,31 @@ const BlogTable = ({ allBlogs }) => {
 
 	const visibleBlogs = allBlogs.slice((page - 1) * rowsPerPage, (page - 1) * rowsPerPage + rowsPerPage);
 
+	const PaginationControls = () => (
+		<Box sx={{
+			display: 'flex',
+			justifyContent: 'space-between',
+			alignItems: 'center',
+			p: 2,
+			flexDirection: { xs: 'column', sm: 'row' },
+			gap: 2
+		}}>
+			<TablePagination
+				component="div" count={allBlogs.length} rowsPerPage={rowsPerPage} page={page - 1}
+				onPageChange={() => {}} onRowsPerPageChange={handleChangeRowsPerPage}
+				rowsPerPageOptions={[10, 25, 50, 100]} ActionsComponent={() => null}
+				labelDisplayedRows={() => `总数: ${allBlogs.length}`}
+			/>
+			<Pagination
+				count={Math.ceil(allBlogs.length / rowsPerPage)} page={page} onChange={handleChangePage}
+				color="primary" showFirstButton showLastButton
+				size={isMobile ? 'small' : 'medium'}
+			/>
+		</Box>
+	);
+
 	return (
-		<Paper sx={{ overflow: 'hidden', position: 'relative' }}>
+		<Paper sx={{ width: '100%', maxWidth: '1200px', overflow: 'hidden', position: 'relative' }}>
 			{isPageLoading && (
 				<Box
 					sx={{
@@ -115,38 +157,36 @@ const BlogTable = ({ allBlogs }) => {
 				</Box>
 			)}
 
-			<TableContainer sx={{ maxHeight: 'calc(100vh - 300px)' }}>
-				<Table stickyHeader>
-					<TableHead>
-						<TableRow>
-							<TableCell>名称</TableCell>
-							<TableCell>地址</TableCell>
-							<TableCell sx={{ textAlign: 'center' }}>状态</TableCell>
-							<TableCell>最新文章</TableCell>
-							<TableCell sx={{ textAlign: 'center' }}>RSS</TableCell>
-						</TableRow>
-					</TableHead>
-					<TableBody>
-						{visibleBlogs.map((blog) => {
-							const address = blog.Address.trim();
-							const rssFeed = blog['RSS feed']?.trim();
-							const data = blogData[address];
-							return (
-								<TableRow hover key={address}>
-									<TableCell>{blog.Introduction}</TableCell>
-									<TableCell>
+			{isMobile ? (
+				// 移动端
+				<Box sx={{ p: 1 }}>
+					{visibleBlogs.map((blog) => {
+						const address = blog.Address.trim();
+						const rssFeed = blog['RSS feed']?.trim();
+						const data = blogData[address];
+						return (
+							<Card key={address} sx={{ mb: 2 }}>
+								<CardContent>
+									<Typography variant="h6" component="div" gutterBottom>
+										{blog.Introduction}
+									</Typography>
+									<Typography variant="body2" color="text.secondary" sx={{ mb: 2, wordBreak: 'break-all' }}>
 										<Link href={address} target="_blank" rel="noopener noreferrer" underline="hover">
 											{address}
 										</Link>
-									</TableCell>
-									<TableCell align="center">{getStatusChip(data?.status)}</TableCell>
-									<TableCell align="center">
-										{data ? // 如果 data 存在
-											(data.latestPostDate ? new Date(data.latestPostDate).toLocaleDateString() : 'N/A')
-											: <CircularProgress size={20} /> // 否则显示加载圈
-										}
-									</TableCell>
-									<TableCell align="center">
+									</Typography>
+									<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+										<Typography variant="body2">状态:</Typography>
+										{getStatusChip(data?.status)}
+									</Box>
+									<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+										<Typography variant="body2">最新文章:</Typography>
+										<Typography variant="body2">
+											{data ? (data.latestPostDate ? new Date(data.latestPostDate).toLocaleDateString() : 'N/A') : <CircularProgress size={20} />}
+										</Typography>
+									</Box>
+									<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+										<Typography variant="body2">RSS:</Typography>
 										{rssFeed ? (
 											<Tooltip title="点击订阅 RSS">
 												<Link href={rssFeed} target="_blank" rel="noopener noreferrer">
@@ -154,27 +194,60 @@ const BlogTable = ({ allBlogs }) => {
 												</Link>
 											</Tooltip>
 										) : ('N/A')}
-									</TableCell>
-								</TableRow>
-							);
-						})}
-					</TableBody>
-				</Table>
-			</TableContainer>
+									</Box>
+								</CardContent>
+							</Card>
+						);
+					})}
+				</Box>
+			) : (
+				// 桌面端
+				<TableContainer sx={{ maxHeight: 'calc(100vh - 300px)' }}>
+					<Table stickyHeader>
+						<TableHead>
+							<TableRow>
+								<TableCell>名称</TableCell>
+								<TableCell>地址</TableCell>
+								<TableCell sx={{ textAlign: 'center' }}>状态</TableCell>
+								<TableCell sx={{ textAlign: 'center' }}>最新文章</TableCell>
+								<TableCell sx={{ textAlign: 'center' }}>RSS</TableCell>
+							</TableRow>
+						</TableHead>
+						<TableBody>
+							{visibleBlogs.map((blog) => {
+								const address = blog.Address.trim();
+								const rssFeed = blog['RSS feed']?.trim();
+								const data = blogData[address];
+								return (
+									<TableRow hover key={address}>
+										<TableCell>{blog.Introduction}</TableCell>
+										<TableCell sx={{ wordBreak: 'break-all' }}>
+											<Link href={address} target="_blank" rel="noopener noreferrer" underline="hover">
+												{address}
+											</Link>
+										</TableCell>
+										<TableCell align="center">{getStatusChip(data?.status)}</TableCell>
+										<TableCell align="center">
+											{data ? (data.latestPostDate ? new Date(data.latestPostDate).toLocaleDateString() : 'N/A') : <CircularProgress size={20} />}
+										</TableCell>
+										<TableCell align="center">
+											{rssFeed ? (
+												<Tooltip title="点击订阅 RSS">
+													<Link href={rssFeed} target="_blank" rel="noopener noreferrer">
+														<RssFeedIcon color="warning" />
+													</Link>
+												</Tooltip>
+											) : ('N/A')}
+										</TableCell>
+									</TableRow>
+								);
+							})}
+						</TableBody>
+					</Table>
+				</TableContainer>
+			)}
 
-			{/* 分页组件 */}
-			<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2 }}>
-				<TablePagination
-					component="div" count={allBlogs.length} rowsPerPage={rowsPerPage} page={page - 1}
-					onPageChange={() => {}} onRowsPerPageChange={handleChangeRowsPerPage}
-					rowsPerPageOptions={[10, 25, 50, 100]} ActionsComponent={() => null}
-					labelDisplayedRows={() => `总数: ${allBlogs.length}`}
-				/>
-				<Pagination
-					count={Math.ceil(allBlogs.length / rowsPerPage)} page={page} onChange={handleChangePage}
-					color="primary" showFirstButton showLastButton
-				/>
-			</Box>
+			<PaginationControls />
 		</Paper>
 	);
 };
