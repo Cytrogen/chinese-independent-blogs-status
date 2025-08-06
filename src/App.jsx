@@ -20,6 +20,7 @@ import Brightness7Icon from '@mui/icons-material/Brightness7';
 import MenuIcon from '@mui/icons-material/Menu';
 import HomeIcon from '@mui/icons-material/Home';
 import InfoIcon from '@mui/icons-material/Info';
+import { Helmet } from 'react-helmet-async';
 import BlogTable from './components/BlogTable';
 import AboutPage from "./components/AboutPage.jsx";
 
@@ -142,6 +143,10 @@ function App() {
           transition: 'background-color 0.3s',
         }}
       >
+        <Helmet>
+          <title>中文独立博客状态检查器 | 发现活跃的创作者</title>
+          <meta name="description" content="一个用于检查和筛选 chinese-independent-blogs 列表中博客状态的工具，帮助您找到仍在活跃更新的中文独立博客。" />
+        </Helmet>
         <Box
           component="nav"
           sx={{
