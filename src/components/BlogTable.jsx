@@ -40,7 +40,7 @@ const getLatestPost = async (rssUrl) => {
 	} catch (error) { return null; }
 };
 
-const BlogTable = ({ allBlogs }) => {
+const BlogTable = ({ blogs }) => {
 	const [page, setPage] = useState(1);
 	const [rowsPerPage, setRowsPerPage] = useState(10);
 	const [blogData, setBlogData] = useState({});
@@ -55,10 +55,14 @@ const BlogTable = ({ allBlogs }) => {
 	});
 
 	useEffect(() => {
+		setPage(1);
+	}, [blogs]);
+
+	useEffect(() => {
 		const fetchCurrentPageData = async () => {
 			const startIndex = (page - 1) * rowsPerPage;
 			const endIndex = startIndex + rowsPerPage;
-			const currentPageBlogs = allBlogs.slice(startIndex, endIndex);
+			const currentPageBlogs = blogs.slice(startIndex, endIndex);
 
 			const blogsToFetch = currentPageBlogs.filter(blog => !blogDataRef.current[blog.Address.trim()]);
 
@@ -97,10 +101,10 @@ const BlogTable = ({ allBlogs }) => {
 			setIsPageLoading(false);
 		};
 
-		if (allBlogs.length > 0) {
+		if (blogs.length > 0) {
 			fetchCurrentPageData();
 		}
-	}, [page, rowsPerPage, allBlogs]);
+	}, [page, rowsPerPage, blogs]);
 
 	const handleChangePage = (event, newPage) => {
 		setPage(newPage);
@@ -117,7 +121,7 @@ const BlogTable = ({ allBlogs }) => {
 		return <CircularProgress size={20} />; // 如果没有状态，则显示加载中
 	};
 
-	const visibleBlogs = allBlogs.slice((page - 1) * rowsPerPage, (page - 1) * rowsPerPage + rowsPerPage);
+	const visibleBlogs = blogs.slice((page - 1) * rowsPerPage, (page - 1) * rowsPerPage + rowsPerPage);
 
 	const PaginationControls = () => (
 		<Box sx={{
@@ -129,13 +133,14 @@ const BlogTable = ({ allBlogs }) => {
 			gap: 2
 		}}>
 			<TablePagination
-				component="div" count={allBlogs.length} rowsPerPage={rowsPerPage} page={page - 1}
+				component="div" count={blogs.length} rowsPerPage={rowsPerPage} page={page - 1}
 				onPageChange={() => {}} onRowsPerPageChange={handleChangeRowsPerPage}
 				rowsPerPageOptions={[10, 25, 50, 100]} ActionsComponent={() => null}
-				labelDisplayedRows={() => `总数: ${allBlogs.length}`}
+				labelRowsPerPage="每页行数:"
+				labelDisplayedRows={() => `总数: ${blogs.length}`}
 			/>
 			<Pagination
-				count={Math.ceil(allBlogs.length / rowsPerPage)} page={page} onChange={handleChangePage}
+				count={Math.ceil(blogs.length / rowsPerPage)} page={page} onChange={handleChangePage}
 				color="primary" showFirstButton showLastButton
 				size={isMobile ? 'small' : 'medium'}
 			/>
@@ -157,9 +162,16 @@ const BlogTable = ({ allBlogs }) => {
 				</Box>
 			)}
 
+			{blogs.length === 0 && !isPageLoading && (
+				<Box sx={{ textAlign: 'center', p: 4, minHeight: 300, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+					<Typography variant="h6">未找到匹配的博客</Typography>
+					<Typography color="text.secondary">请尝试更改您的搜索条件。</Typography>
+				</Box>
+			)}
+
 			{isMobile ? (
 				// 移动端
-				<Box sx={{ p: 1 }}>
+				<Box sx={{ p: 1, minHeight: 300 }}>
 					{visibleBlogs.map((blog) => {
 						const address = blog.Address.trim();
 						const rssFeed = blog['RSS feed']?.trim();
@@ -175,6 +187,7 @@ const BlogTable = ({ allBlogs }) => {
 											{address}
 										</Link>
 									</Typography>
+									{blog.tags && <Typography variant="body2" sx={{ mb: 1, color: 'text.secondary' }}>标签: {blog.tags}</Typography>}
 									<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
 										<Typography variant="body2">状态:</Typography>
 										{getStatusChip(data?.status)}
@@ -208,6 +221,7 @@ const BlogTable = ({ allBlogs }) => {
 							<TableRow>
 								<TableCell>名称</TableCell>
 								<TableCell>地址</TableCell>
+								<TableCell sx={{width: '20%'}}>标签</TableCell>
 								<TableCell sx={{ textAlign: 'center' }}>状态</TableCell>
 								<TableCell sx={{ textAlign: 'center' }}>最新文章</TableCell>
 								<TableCell sx={{ textAlign: 'center' }}>RSS</TableCell>
@@ -226,6 +240,7 @@ const BlogTable = ({ allBlogs }) => {
 												{address}
 											</Link>
 										</TableCell>
+										<TableCell>{blog.tags}</TableCell>
 										<TableCell align="center">{getStatusChip(data?.status)}</TableCell>
 										<TableCell align="center">
 											{data ? (data.latestPostDate ? new Date(data.latestPostDate).toLocaleDateString() : 'N/A') : <CircularProgress size={20} />}
